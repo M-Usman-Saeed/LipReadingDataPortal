@@ -1,0 +1,8 @@
+pipenv install django
+pipenv shell
+django-admin startproject lipReadingPortal .
+python manage.py runserver
+
+go to Project folder and write this command: pipenv --venv 
+copy the path and add /bin/python to it
+

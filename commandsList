@@ -1,4 +1,0 @@
-pipenv install django
-pipenv shell
-django-admin startproject lipReadingPortal .
-python manage.py runserver
