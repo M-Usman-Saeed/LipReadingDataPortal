@@ -17,7 +17,7 @@ class VideoData(models.Model):
     duration = models.DurationField()
 
 class WordDetails(models.Model):
-    text_id = models.ForeignKey(TextData, on_delete=models.SET_DEFAULT)
+    text_id = models.ForeignKey(TextData, on_delete=models.DO_NOTHING)
     word = models.CharField(max_length=50)
     start_time = models.TimeField()
     end_time = models.TimeField()
