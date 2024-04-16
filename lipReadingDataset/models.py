@@ -4,8 +4,8 @@ from django.db import models
 
 class TextData(models.Model):
     text = models.TextField()
-    video_link = models.URLField(max_length=200, null=True)
-    video_duration = models.DecimalField(max_digits=10, decimal_places=3, null=True)
+    video_link = models.URLField(max_length=200)
+    video_duration = models.DecimalField(max_digits=10, decimal_places=3)
 
 class PartOfSpeach(models.Model):
     pos = models.CharField(max_length=20)
@@ -13,9 +13,9 @@ class PartOfSpeach(models.Model):
 class WordDetail(models.Model):
     text_id = models.ForeignKey(TextData, on_delete=models.DO_NOTHING)
     word = models.CharField(max_length=50)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    word_duration = models.DecimalField(max_digits=10, decimal_places=3, null=True)
+    start_time = models.DecimalField(max_digits=10, decimal_places=3)
+    end_time = models.DecimalField(max_digits=10, decimal_places=3)
+    word_duration = models.DecimalField(max_digits=10, decimal_places=3)
     pos_id = models.OneToOneField(PartOfSpeach, on_delete=models.CASCADE)
     difficulty = models.CharField(max_length=7)
     positive = models.BooleanField()

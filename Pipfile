@@ -7,6 +7,8 @@ name = "pypi"
 django = "*"
 django-debug-toolbar = "*"
 mysqlclient = "*"
+moviepy = "*"
+mysql-connector-python = "*"
 
 [dev-packages]
 
