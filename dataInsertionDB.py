@@ -2,8 +2,9 @@ import os
 from moviepy.editor import VideoFileClip
 import shutil
 
-master_folder = "path/to/master_folder"
-destination_folder = "path/to/destination_folder"
+master_folder = "/Users/Usman/Documents/Projects/LipReadingPortal/data"
+
+destination_folder = "/Users/Usman/Documents/Projects/LipReadingPortal/data/dataset"
 
 # Function to read text file and extract data
 def read_text_file(file_path):
@@ -19,6 +20,23 @@ def calculate_video_duration(video_path):
     duration = clip.duration
     clip.close()
     return round(duration, 3)
+
+# Generate SQL INSERT queries for lipReadingDataset_textdata table
+def generate_textdata_query(text_id, text, video_duration, video_link):
+    textdata_query = f"INSERT INTO lipReadingDataset_textdata (id, text, video_duration, video_link) VALUES ({text_id}, '{text}', {video_duration}, '{video_link}');"
+    return textdata_query
+
+# Generate SQL INSERT queries for lipReadingDataset_worddetail table
+def generate_worddetail_query(text_id, data):
+    worddetail_queries = []
+    for item in data[2:]:
+        word = item[0]
+        start_time = float(item[1])
+        end_time = float(item[2])
+        word_duration = round(end_time - start_time, 3)
+        worddetail_query = f"INSERT INTO lipReadingDataset_worddetail (word, start_time, end_time, text_id_id, word_duration) VALUES ('{word}', '{start_time}', '{end_time}', {text_id}, {word_duration});"
+        worddetail_queries.append(worddetail_query)
+    return worddetail_queries
 
 # Iterate through folders
 for folder_name in os.listdir(master_folder):
@@ -60,6 +78,15 @@ for folder_name in os.listdir(master_folder):
                     # Calculate video duration
                     video_duration = calculate_video_duration(destination_video_path)
                     print("Video path:", destination_video_path, "Duration:", video_duration)
+                    
+                    # Generate SQL INSERT queries for lipReadingDataset_textdata table
+                    textdata_query = generate_textdata_query(index, text, video_duration, destination_video_path)
+                    print("Textdata Query:", textdata_query)
+                    
+                    # Generate SQL INSERT queries for lipReadingDataset_worddetail table
+                    worddetail_queries = generate_worddetail_query(index, data)
+                    for query in worddetail_queries:
+                        print("Worddetail Query:", query)
                 else:
                     print("No corresponding video file found.")
         else:
