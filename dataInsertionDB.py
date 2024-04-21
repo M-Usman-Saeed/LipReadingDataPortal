@@ -14,7 +14,7 @@ cursor = conn.cursor()
 
 master_folder = "/Users/Usman/Documents/Projects/LipReadingPortal/data"
 
-destination_folder = "/Users/Usman/Documents/Projects/LipReadingPortal/data/dataset"
+destination_folder = "media"
 
 # Fetch the last inserted text data ID and word ID
 cursor.execute("SELECT MAX(id) FROM lipReadingDataset_textdata;")
@@ -49,7 +49,7 @@ def escape_single_quotes(text):
 # Generate SQL INSERT queries for lipReadingDataset_textdata table
 def generate_textdata_query(text_id, text, video_duration, video_link):
     text = escape_single_quotes(text)
-    textdata_query = f"INSERT INTO lipReadingDataset_textdata (id, text, video_duration, video_link) VALUES ({text_id}, '{text}', {video_duration}, '{video_link}');"
+    textdata_query = f"INSERT INTO lipReadingDataset_textdata (id, text, video_duration, video_link) VALUES ({text_id}, '{text}', {video_duration}, '/{video_link}');"
     return textdata_query
 
 # Generate SQL INSERT queries for lipReadingDataset_worddetail table
