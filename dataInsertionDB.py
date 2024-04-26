@@ -52,6 +52,34 @@ def generate_textdata_query(text_id, text, video_duration, video_link):
     textdata_query = f"INSERT INTO lipReadingDataset_textdata (id, text, video_duration, video_link) VALUES ({text_id}, '{text}', {video_duration}, '/{video_link}');"
     return textdata_query
 
+def insert_homophone(homophone):
+    cursor.execute("SELECT MAX(homophone_group_id) FROM lipReadingDataset_homophone;")
+    homo_group_id = cursor.fetchone()[0] + 1
+    query = f"INSERT INTO lipReadingDataset_homophone (homophone, homophone_group_id) VALUES ('{homophone}', {homo_group_id});"
+    cursor.execute(query)
+    conn.commit()
+    cursor.execute("SELECT MAX(id) FROM lipReadingDataset_homophone;")
+    homo_id = cursor.fetchone()[0]
+    return homo_id
+
+def get_homo_id(word):
+    query = f"SELECT id from lipReadingDataset_homophone where homophone = '{word}';"
+    cursor.execute(query)
+    homo_id = cursor.fetchone()
+    if homo_id is not None:
+        return homo_id[0]
+    else:
+        return insert_homophone(word)
+    
+def get_word_difficulty(word):
+    if len(word) <= 5:
+        return 'easy'
+    elif 6 <= len(word) <=9:
+        return 'medium'
+    else:
+        return 'hard'
+
+
 # Generate SQL INSERT queries for lipReadingDataset_worddetail table
 def generate_worddetail_query(text_id, data):
     global last_worddetail_id
@@ -62,7 +90,9 @@ def generate_worddetail_query(text_id, data):
         end_time = float(item[2])
         word_duration = round(end_time - start_time, 3)
         last_worddetail_id += 1
-        worddetail_query = f"INSERT INTO lipReadingDataset_worddetail (id, word, start_time, end_time, text_id_id, word_duration, difficulty, positive, negative, pos_id_id) VALUES ({last_worddetail_id}, '{word}', '{start_time}', '{end_time}', {text_id}, {word_duration}, 'unknown', 0, 0, 1);"
+        homo_id = get_homo_id(word)
+        word_difficulty = get_word_difficulty(word)
+        worddetail_query = f"INSERT INTO lipReadingDataset_worddetail (id, word, start_time, end_time, text_id, word_duration, difficulty, positive, negative, pos_id, homophone_id) VALUES ({last_worddetail_id}, '{word}', '{start_time}', '{end_time}', {text_id}, {word_duration}, '{word_difficulty}', 0, 0, 1, {homo_id});"
         worddetail_queries.append(worddetail_query)
     return worddetail_queries
 
@@ -70,7 +100,7 @@ def generate_worddetail_query(text_id, data):
 for folder_name in os.listdir(master_folder):
     folder_path = os.path.join(master_folder, folder_name)
     if os.path.isdir(folder_path):
-        print("Subfolder:", folder_name)
+        # print("Subfolder:", folder_name)
         
         # Check for text files
         text_files = [file for file in os.listdir(folder_path) if file.endswith('.txt')]
@@ -83,16 +113,6 @@ for folder_name in os.listdir(master_folder):
                 
                 # Read text file and extract data
                 text, data = read_text_file(text_path)
-                print("Text file:", text_file)
-                print("Text:", text)
-                
-                # Print every word with start time, end time, and duration
-                for item in data[2:]:
-                    word = item[0]
-                    start_time = float(item[1])
-                    end_time = float(item[2])
-                    duration = round(end_time - start_time, 3)
-                    print("Word:", word, "Start:", start_time, "End:", end_time, "Duration:", duration)
                 
                 # Copy video file to destination folder if it exists
                 if os.path.exists(video_path):
@@ -110,7 +130,6 @@ for folder_name in os.listdir(master_folder):
                     # Generate SQL INSERT queries for lipReadingDataset_textdata table
                     last_textdata_id += 1
                     textdata_query = generate_textdata_query(last_textdata_id, text, video_duration, destination_video_path)
-                    print(textdata_query)
                     cursor.execute(textdata_query)
                     conn.commit()
                     print("Textdata Query:", textdata_query)
@@ -120,7 +139,6 @@ for folder_name in os.listdir(master_folder):
                     for query in worddetail_queries:
                         cursor.execute(query)
                         conn.commit()
-                        print("Worddetail Query:", query)
                 else:
                     print("No corresponding video file found.")
         else:

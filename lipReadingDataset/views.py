@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 from .models import TextData, WordDetail
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -55,11 +55,57 @@ def text_detail(request, id):
     serializer = TextSerializer(text)
     return Response(serializer.data)
 
+# @api_view()
+# def textForWord(request, word):
+#     textList = TextData.objects.filter(
+#         Q(worddetail__word = word)
+#     ).values('id', 'text', 'video_duration', 'video_link')[:5]
+#     serializer = TextForWordSerializer(textList, many=True, context={'request': request})
+#     return Response(serializer.data)
+
+
 @api_view()
-def textForWord(request, word):
-    textList = TextData.objects.filter(
-        worddetail__word = word
-    ).values('id', 'text', 'video_duration', 'video_link')[:5]
+def textForWord(request):
+    # Retrieve the search word from query parameters
+    word = request.query_params.get('word', None)  # Default to None if not provided
+
+    if not word:
+        return Response(
+            {"error": "Missing 'word' parameter."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    # Retrieve the range start and end for word_duration from query parameters
+    duration_start = request.query_params.get('duration_start', None)
+    duration_end = request.query_params.get('duration_end', None)
+
+    # Start with a base query for texts that contain the specified word
+    text_filter = Q(worddetail__word=word)
+
+    # If both duration_start and duration_end are provided and valid, use them to create the range
+    if duration_start is not None and duration_end is not None:
+        try:
+            # Convert them to floats to ensure they're valid numbers
+            duration_start = float(duration_start)
+            duration_end = float(duration_end)
+            
+            # Update the query filter to include the range
+            text_filter &= Q(
+                worddetail__word_duration__gte=duration_start,
+                worddetail__word_duration__lte=duration_end
+            )
+        except ValueError:
+            # Return a bad request response if the values cannot be converted to float
+            return Response(
+                {"error": "Invalid duration_start or duration_end format. They should be numbers."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    # Get the filtered list of TextData
+    textList = TextData.objects.filter(text_filter).distinct().values(
+        'id', 'text', 'video_duration', 'video_link'
+    )
+
+    # Serialize and return the data
     serializer = TextForWordSerializer(textList, many=True, context={'request': request})
-    print(serializer.data)
     return Response(serializer.data)
