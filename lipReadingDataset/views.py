@@ -82,7 +82,7 @@ def textForWord(request):
     negative = request.query_params.get('negative', None)
 
     # Check for missing required parameters
-    if not word and not homophone_word and positive == 0 and negative == 0:
+    if not word and not homophone_word and not positive and not negative:
         return Response(
             {"error": "Missing parameter."},
             status=status.HTTP_400_BAD_REQUEST,
