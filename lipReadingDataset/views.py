@@ -75,51 +75,39 @@ def text_detail(request, id):
 
 @api_view(['GET'])
 def textForWord(request):
-    # Retrieve query parameters
     word = request.query_params.get('word', None)
-    homophone_word = request.query_params.get('homophone', None)  # Homophone word parameter
+    homophone_word = request.query_params.get('homophone', None)
     positive = request.query_params.get('positive', None)
     negative = request.query_params.get('negative', None)
 
-    # Check for missing required parameters
     if not word and not homophone_word and not positive and not negative:
         return Response(
             {"error": "Missing parameter."},
             status=status.HTTP_400_BAD_REQUEST,
         )
     
-    # Base query filter
     text_filter = Q()
 
-    # If a specific word is provided, filter by texts containing that word
     if word:
-        # Retrieve the range start and end for word_duration from query parameters
         duration_start = request.query_params.get('duration_start', None)
         duration_end = request.query_params.get('duration_end', None)
-
-        # Start with a base query for texts that contain the specified word
+        
         text_filter = Q(worddetail__word=word)
 
-        # If both duration_start and duration_end are provided and valid, use them to create the range
         if duration_start is not None and duration_end is not None:
             try:
-                # Convert them to floats to ensure they're valid numbers
                 duration_start = float(duration_start)
                 duration_end = float(duration_end)
                 
-                # Update the query filter to include the range
                 text_filter &= Q(
                     worddetail__word_duration__gte=duration_start,
-                    worddetail__word_duration__lte=duration_end
-                )
+                    worddetail__word_duration__lte=duration_end)
             except ValueError:
-                # Return a bad request response if the values cannot be converted to float
                 return Response(
                     {"error": "Invalid duration_start or duration_end format. They should be decimal numbers."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-    # If a homophone word is provided, retrieve its group and include all words from that group
     if homophone_word:
         homophone_group_id = Homophone.objects.filter(homophone=homophone_word).values_list("homophone_group_id", flat=True).first()
         if homophone_group_id:
@@ -137,12 +125,10 @@ def textForWord(request):
     if negative:
         text_filter &= Q(worddetail__negative=negative)
 
-    # Fetch the filtered list of TextData
     textList = TextData.objects.filter(text_filter).distinct().values(
         'id', 'text', 'video_duration', 'video_link'
-    )[:10]
+    )[:50]
 
-    # Serialize and return the data
     serializer = TextForWordSerializer(textList, many=True, context={'request': request})
     
     if serializer.data == []:
