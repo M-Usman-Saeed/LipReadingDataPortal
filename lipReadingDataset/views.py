@@ -127,7 +127,7 @@ def textForWord(request):
 
     textList = TextData.objects.filter(text_filter).distinct().values(
         'id', 'text', 'video_duration', 'video_link'
-    )[:50]
+    )[:10]
 
     serializer = TextForWordSerializer(textList, many=True, context={'request': request})
     
